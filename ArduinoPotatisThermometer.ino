@@ -5,6 +5,10 @@
 float warningtemp = 23.5;
 bool dbg = true;
 
+//LCD Pin1 VSS GND
+//LCD Pin2 VDD +5V
+//LCD Pin3 VDA A4
+//LCD Pin4 VCK A5
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // Thermometers on pins 2–5
