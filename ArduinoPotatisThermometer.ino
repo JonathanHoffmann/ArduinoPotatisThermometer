@@ -2,8 +2,14 @@
 #include <LiquidCrystal_I2C.h>
 #include <DS18B20.h>
 
-float warningtemp = 23.5;
+float warningtemphigh = 12;
+float warningtemplow = 5;
 bool dbg = true;
+
+// Switch pins
+const int LOW_SWITCH_PIN  = 12;
+const int HIGH_SWITCH_PIN = 13;
+bool checkHigh, checkLow;
 
 //LCD Pin1 VSS GND
 //LCD Pin2 VDD +5V
@@ -36,11 +42,19 @@ void setup()
 
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); // Start with relay off
+
+    // Switches use internal pull-ups
+  pinMode(LOW_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(HIGH_SWITCH_PIN, INPUT_PULLUP);
 }
 
 void loop()
 {
   lcd.clear();
+
+    // Read switch states
+  bool checkLow  = (digitalRead(LOW_SWITCH_PIN)  == LOW); // switch ON = active
+  bool checkHigh = (digitalRead(HIGH_SWITCH_PIN) == LOW);
   
   // Read sensors
   if (ds2.selectNext()) temp2 = ds2.getTempC();
@@ -74,21 +88,29 @@ void loop()
   lcd.print("C");
 
   // Relay logic
-  if (temp2 < warningtemp || temp4 < warningtemp || temp6 < warningtemp || temp8 < warningtemp)
+
+  if (checkLow && 
+      (temp2 < warningtemplow || temp4 < warningtemplow || temp6 < warningtemplow || temp8 < warningtemplow))
   {
-    digitalWrite(RELAY_PIN, HIGH); // Turn relay ON
-    if (dbg)
-    {
-      Serial.println("Turning Lamp on");
-    }
+    turnOn = true;
+    if (dbg) Serial.println("Turning Lamp on (LOW temp)");
+  }
+
+  if (checkHigh &&
+      (temp2 > warningtemphigh || temp4 > warningtemphigh || temp6 > warningtemphigh || temp8 > warningtemphigh))
+  {
+    turnOn = true;
+    if (dbg) Serial.println("Turning Lamp on (HIGH temp)");
+  }
+
+  if (turnOn)
+  {
+    digitalWrite(RELAY_PIN, HIGH); // Relay ON
   }
   else
   {
-    digitalWrite(RELAY_PIN, LOW); // Turn relay OFF
-    if (dbg)
-    {
-      Serial.println("Turning Lamp off");
-    }
+    digitalWrite(RELAY_PIN, LOW); // Relay OFF
+    if (dbg) Serial.println("Turning Lamp off");
   }
 
   delay(1000);
