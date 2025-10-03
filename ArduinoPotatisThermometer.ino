@@ -7,8 +7,8 @@ float warningtemplow = 5;
 bool dbg = true;
 
 // Switch pins
-const int LOW_SWITCH_PIN  = 12;
-const int HIGH_SWITCH_PIN = 13;
+// const int LOW_SWITCH_PIN  = 13;
+const int HIGH_SWITCH_PIN = 12;
 bool checkHigh, checkLow;
 
 //LCD Pin1 VSS GND
@@ -27,6 +27,7 @@ const int RELAY_PIN = 10; // Pin connected to relay IN
 
 float temp2 = 0, temp4 = 0, temp6 = 0, temp8 = 0;
 char buf[6];
+bool turnOff;
 
 void setup()
 {
@@ -41,10 +42,10 @@ void setup()
   lcd.clear();
 
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // Start with relay off
+  digitalWrite(RELAY_PIN, HIGH); // Start with relay on
 
-    // Switches use internal pull-ups
-  pinMode(LOW_SWITCH_PIN, INPUT_PULLUP);
+  // Switches use internal pull-ups
+  // pinMode(LOW_SWITCH_PIN, INPUT_PULLUP);
   pinMode(HIGH_SWITCH_PIN, INPUT_PULLUP);
 }
 
@@ -52,9 +53,17 @@ void loop()
 {
   lcd.clear();
 
-    // Read switch states
-  bool checkLow  = (digitalRead(LOW_SWITCH_PIN)  == LOW); // switch ON = active
+  // Read switch states
+  // bool checkLow  = (digitalRead(LOW_SWITCH_PIN)  == LOW); // switch ON = active
+  bool checkLow = true;
   bool checkHigh = (digitalRead(HIGH_SWITCH_PIN) == LOW);
+  turnOff = false;
+  if (dbg) {
+    // Serial.print(F("checkLow: "));
+    // Serial.print(checkLow);
+    Serial.print(F("\ncheckHigh: "));
+    Serial.println(checkHigh);
+  }
   
   // Read sensors
   if (ds2.selectNext()) temp2 = ds2.getTempC();
@@ -62,6 +71,17 @@ void loop()
   if (ds6.selectNext()) temp6 = ds6.getTempC();
   if (ds8.selectNext()) temp8 = ds8.getTempC();
 
+if (dbg) {
+  Serial.print(F("Temps: "));
+  Serial.print(temp2);
+  Serial.print(F("; "));
+  Serial.print(temp4);
+  Serial.print(F("; "));
+  Serial.print(temp6);
+  Serial.print(F("; "));
+  Serial.println(temp8);
+}
+  
   // Display temps with °C
   lcd.setCursor(0, 0);
   dtostrf(temp2, 4, 1, buf);
@@ -92,26 +112,27 @@ void loop()
   if (checkLow && 
       (temp2 < warningtemplow || temp4 < warningtemplow || temp6 < warningtemplow || temp8 < warningtemplow))
   {
-    turnOn = true;
-    if (dbg) Serial.println("Turning Lamp on (LOW temp)");
+    turnOff = true;
+    if (dbg) Serial.println("Turning Lamp off (LOW temp)");
   }
 
   if (checkHigh &&
       (temp2 > warningtemphigh || temp4 > warningtemphigh || temp6 > warningtemphigh || temp8 > warningtemphigh))
   {
-    turnOn = true;
-    if (dbg) Serial.println("Turning Lamp on (HIGH temp)");
+    turnOff = true;
+    if (dbg) Serial.println("Turning Lamp off (HIGH temp)");
   }
 
-  if (turnOn)
+  if (turnOff)
   {
-    digitalWrite(RELAY_PIN, HIGH); // Relay ON
+    digitalWrite(RELAY_PIN, LOW); // Relay OFF
   }
   else
   {
-    digitalWrite(RELAY_PIN, LOW); // Relay OFF
-    if (dbg) Serial.println("Turning Lamp off");
+    digitalWrite(RELAY_PIN, HIGH); // Relay ON
+    if (dbg) Serial.println("Turning Lamp on");
   }
 
   delay(1000);
+  
 }
