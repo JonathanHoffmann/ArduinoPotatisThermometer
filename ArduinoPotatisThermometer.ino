@@ -3,7 +3,7 @@
 #include <DS18B20.h>
 
 float warningtemphigh = 12;
-float warningtemplow = 5;
+float warningtemplow = 3.5;
 bool dbg = true;
 
 // Switch pins
